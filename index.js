@@ -72,16 +72,21 @@ function train(base, layers, count,checks , generations, mutation ,answer){
     }
     
     for(var i = 0; i < generations; i++){
-        let closest, closestOutput;
-        let prompt = answer();
+        let closest, smallestOffset;
         for(var j = 0; j < networks.length;j++){
-            let a = networks[j].calculate(prompt.input)[0]
-            if(!closest || Math.abs(prompt.output - a) < Math.abs(prompt.output-closestOutput)){
-                closestOutput = a;
+            var offset = 0;
+            for(var z = 0; z < checks; z++){
+                let prompt = answer();
+                let a = networks[j].calculate(prompt.input)[0]
+                offset += Math.abs(a-prompt.output)
+            }
+            offset /= checks;
+            if(!closest || offset < smallestOffset){
+                smallestOffset = offset
                 closest = j;
             }
         }
-        console.log(`Gen: ${i}, Answer: ${prompt.output}, closest: ${closestOutput}, accuracy: ${(prompt.output-Math.abs(closestOutput-prompt.output))/prompt.output*100}%`)
+        console.log(`Gen: ${i}, offset: ${smallestOffset}`)
         networks[0] = networks[closest];
         for(var j = 1; j < networks.length; j++){
             networks[j] = networks[closest].mutate(...mutation);
@@ -90,9 +95,9 @@ function train(base, layers, count,checks , generations, mutation ,answer){
     return networks[0]
 
 }
-train(new Network(2, 1), [], 10000, 1000, [0.5, 0.001], ()=>{
-    var x = Math.random()
-    var y = Math.random()
-    var r = x + y;
+var bot = train(new Network(2, 1), [6, 6], 1000, 10, 10000, [0.5, 0.005], ()=>{
+    var x = Math.random()*2
+    var y = Math.random()*3
+    var r = x*y;
     return {input: [x, y], output: r}
 })
