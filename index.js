@@ -27,11 +27,12 @@ class Network{
         var nextLayer = [];
         for(var i = 0; i <this.layers.length;i++){
             for(var j = 0; j < this.layers[i][0].length;j++){
-                nextLayer[j] = input[0]*this.layers[i][0][j];
-                for(var z = 1; z < input.length; z++){
+                nextLayer[j] = 0;
+                for(var z = 0; z < input.length; z++){
                     nextLayer[j] += input[z]*this.layers[i][z][j]
                 }
             }
+            input = []
             for(let j = 0; j < nextLayer.length; j++){
                 input[j] = nextLayer[j]
             }
@@ -50,7 +51,6 @@ class Network{
                 }
                 return sum;
             }).setOutput([this.layers[i][0].length, 1])
-
             input = multiplyMatrix(input, this.layers[i], this.layers[i].length)
         }
         return input;
