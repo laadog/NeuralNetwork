@@ -1,7 +1,7 @@
 const { GPU } = require('gpu.js');
 
 
-const SIZE = 1024
+const SIZE = 512
 const generateMatrices = () => {
     const matrices = [[], []]
     for (let y = 0; y < SIZE; y++){
@@ -29,27 +29,31 @@ function multiply(a, b){
     return c;
 }
 
+
+let a = [[1,2,3]]
+let b = [[1,2, 3], [3,4, 3], [5, 6, 3]]
+
 const gpu = new GPU();
-const multiplyMatrix = gpu.createKernel(function(a, b, size) {
+const multiplyMatrix = gpu.createKernel(function(a, b, length) {
 let sum = 0;
-for (let i = 0; i < size; i++) {
+for (let i = 0; i < length; i++) {
     sum += a[this.thread.y][i] * b[i][this.thread.x];
 }
 return sum;
-}).setOutput([SIZE, SIZE])
+}).setOutput([3, 1])
 
-const matrices = generateMatrices()
+let gpuOut = multiplyMatrix(a, b, b.length)
 
-console.time("Cpu")
-const cpuOut = multiply(matrices[0], matrices[1])
-console.timeEnd("Cpu")
-console.time("Gpu")
-let gpuOut = multiplyMatrix(matrices[0], matrices[1], SIZE)
-gpuOut = multiplyMatrix(matrices[0], matrices[1], SIZE)
-console.timeEnd("Gpu")
+console.log(gpuOut)
+console.log(multiply(a, b))
+
+// console.time("Cpu")
+// const cpuOut = multiply(matrices[0], matrices[1])
+// console.timeEnd("Cpu")
+// console.time("Gpu")
+// gpuOut = multiplyMatrix(matrices[0], matrices[1], SIZE)
+// console.timeEnd("Gpu")
 
 
 
-console.log(cpuOut[10][12]) // Logs the element at the 10th row and the 12th column of the output matrix
-console.log(gpuOut[10][12]) // Logs the element at the 10th row and the 12th column of the output matrix
 

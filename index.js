@@ -1,3 +1,5 @@
+const { GPU } = require('gpu.js');
+
 class Network{
     inputs;
     outputs;
@@ -14,7 +16,7 @@ class Network{
             for(var j = 0; j < [this.inputs, ...depths, this.outputs][i]; j++){
                 this.layers[i][j] = []
                 for(var z = 0; z < [this.inputs, ...depths, this.outputs][i+1];z++){
-                    this.layers[i][j][z] = 1 - 2*Math.random()
+                    this.layers[i][j][z] = Math.floor((1 - 2*Math.random())*10)
                 }
             }
         }
@@ -25,14 +27,33 @@ class Network{
         var nextLayer = [];
         for(var i = 0; i <this.layers.length;i++){
             for(var j = 0; j < this.layers[i][0].length;j++){
-                for(var z = 0; z < (this.layers[i].length ); z++){
-                    
-                    nextLayer[j] = (nextLayer[0] || 0) + input[z]*this.layers[i][z][j]
+                nextLayer[j] = input[0]*this.layers[i][0][j];
+                for(var z = 1; z < input.length; z++){
+                    nextLayer[j] += input[z]*this.layers[i][z][j]
                 }
             }
-            input = nextLayer
+            for(let j = 0; j < nextLayer.length; j++){
+                input[j] = nextLayer[j]
+            }
+            nextLayer = []
         }
-        return nextLayer.slice(0, this.outputs);
+        return input;
+    }
+
+    calculateGPU(input){
+        const gpu = new GPU();
+        for(let i = 0; i < this.layers.length; i++){
+            const multiplyMatrix = gpu.createKernel(function(a, b, size) {
+                let sum = 0;
+                for (let i = 0; i < size; i++) {
+                    sum += a[this.thread.y][i] * b[i][this.thread.x];
+                }
+                return sum;
+            }).setOutput([this.layers[i][0].length, 1])
+
+            input = multiplyMatrix(input, this.layers[i], this.layers[i].length)
+        }
+        return input;
     }
 
     mutate(percentage = 0.8, offset = 0.1){
@@ -95,9 +116,10 @@ function train(base, layers, count,checks , generations, mutation ,answer){
     return networks[0]
 
 }
-var bot = train(new Network(2, 1), [6, 6], 1000, 10, 10000, [0.5, 0.005], ()=>{
-    var x = Math.random()*2
-    var y = Math.random()*3
-    var r = x*y;
-    return {input: [x, y], output: r}
-})
+
+
+let n = new Network(2, 1)
+
+n.generate([2, 2, 2])
+console.log(n.calculateGPU([1, 2]))
+console.log(n.calculate([1, 2]))
