@@ -10,7 +10,7 @@ b = new Bot(n, (input) => {
             max = input[i]
         }
     }
-
+//Test
     for(let i = 0; i < input.length; i++){
         if(input[i] == max){input[i] = true}
         else{
