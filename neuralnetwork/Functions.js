@@ -1,4 +1,3 @@
-
 function matrixMultiplication(a, b){
     var c = []
     for (let i = 0; i < a.length; i++) {
@@ -11,4 +10,28 @@ function matrixMultiplication(a, b){
         }
     }
     return c;
+}
+
+function indexOfMax(intArr){
+    let max;
+    intArr.forEach(element => {
+        if(!max || element > max){
+            max = element
+        }
+    });
+    return intArr.indexOf(max)
+}
+
+function binaryArray(intArr){
+    let max = indexOfMax(intArr)
+    intArr.fill(false)
+    intArr[max] = true
+    return intArr
+}
+
+
+module.exports = {
+    matrixMultiplication,
+    indexOfMax,
+    binaryArray,
 }

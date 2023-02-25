@@ -2,6 +2,7 @@ class Network {
     inputs;
     outputs;
     layers = [];
+    depths;
 
     constructor(inputs, outputs) {
         this.inputs = inputs;
@@ -9,6 +10,7 @@ class Network {
     }
 
     generate(depths) {
+        this.depths = depths
         for (var i = 0; i < depths.length + 1; i++) {
             this.layers[i] = []
             for (var j = 0; j < [this.inputs, ...depths, this.outputs][i]; j++) {

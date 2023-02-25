@@ -1,12 +1,21 @@
 const {Network} = require("./Network")
+const {GPU} = require("gpu.js")
 
 class Trainer {
-    train(inputs, outputs, layers, count, checks, generations, mutation, answer) {
+    train({model, count, checks, generations, mutation, answer, miss}) {
         var networks = []
-        for (var i = 0; i < count; i++) {
-            networks[i] = new Network(inputs, outputs)
-            networks[i].generate(layers)
+        if(true){
+            for (var i = 0; i < count; i++) {
+                networks[i] = new Network(model.inputs, model.outputs)
+                networks[i].generate(model.depths)
+            }
+        }else{
+            networks[0] = model;
+            for (var i = 1; i < count; i++) {
+                networks[i] = model.mutate(...mutation)
+            }
         }
+
 
         for (var i = 0; i < generations; i++) {
             let closest, smallestOffset;
@@ -14,8 +23,8 @@ class Trainer {
                 var offset = 0;
                 for (var z = 0; z < checks; z++) {
                     let prompt = answer();
-                    let a = networks[j].calculate(prompt.input)[0]
-                    offset += Math.abs(a - prompt.output)
+                    let a = networks[j].calculate(prompt.input)
+                    offset += miss(a, prompt.output)
                 }
                 offset /= checks;
                 if (!smallestOffset || offset < smallestOffset) {
@@ -23,7 +32,7 @@ class Trainer {
                     closest = j;
                 }
             }
-            //console.log(`Gen: ${i}, offset: ${smallestOffset}`)
+            console.log(`Gen: ${i}, offset: ${smallestOffset}`)
             networks[0] = networks[closest];
             for (var j = 1; j < networks.length; j++) {
                 networks[j] = networks[closest].mutate(...mutation);
@@ -33,17 +42,24 @@ class Trainer {
 
     }
 
-    trainGPU(inputs, outputs, layers, count, checks, generations, mutation, answer) {
-        var networks = [];
+    trainGPU({model, count, checks, generations, mutation, answer, miss}) {
 
-        for (let i = 0; i < count; i++) {
-            let t = new Network(inputs, outputs)
-            t.generate(layers)
-            networks[i] = t.layers;
-        }
-
-        const gpu = new GPU();
-
+        var networks = []
+        if(true){
+            for (var i = 0; i < count; i++) {
+                networks[i] = new Network(model.inputs, model.outputs)
+                networks[i].generate(model.depths)
+                networks[i] = networks[i].layers
+            }
+        }else{
+            networks[0] = model;
+            for (var i = 1; i < count; i++) {
+                networks[i] = model.mutate(...mutation)
+                networks[i] = networks[i].layers
+            }
+        }   
+            const gpu = new GPU();
+            
         const multiply = gpu.createKernel(function (a, b, length) {
             let sum = 0;
             for (let i = 0; i < length; i++) {
@@ -54,7 +70,7 @@ class Trainer {
             dynamicOutput: true,
             dynamicArguments: true
         })
-
+        
         for (let i = 0; i < generations; i++) {
             let input = []
             let output = []
@@ -81,7 +97,8 @@ class Trainer {
             for (let j = 0; j < networks.length; j++) {
                 let offset = 0;
                 for (let z = 0; z < checks; z++) {
-                    offset += Math.abs(output[j][z] - input[j][z][0])
+                    offset += miss(output[j][z], input[j][z])
+                    offset += Math.abs(input[j][z] - output[j][z][0])
                 }
                 offset /= checks
                 if (!smallestOffset || offset < smallestOffset) {
@@ -90,16 +107,16 @@ class Trainer {
                 }
             }
 
-            //console.log(`Gen: ${i}, offset: ${smallestOffset}`)
+            console.log(`Gen: ${i}, offset: ${smallestOffset}`)
             networks[0] = networks[closest]
-            let t = new Network(inputs, outputs);
+            let t = new Network(model.inputs, model.outputs);
             t.layers = networks[0]
             for (let j = 1; j < networks.length; j++) {
                 networks[j] = t.mutate(...mutation).layers
             }
         }
 
-        let t = new Network(inputs, outputs);
+        let t = new Network(model.inputs, model.outputs);
         t.layers = networks[0]
         return t;
 
