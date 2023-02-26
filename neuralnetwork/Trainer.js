@@ -42,7 +42,7 @@ class Trainer {
 
     }
 
-    trainGPU({model, count, checks, generations, mutation, answer, miss}) {
+    trainGPU({model, count, checks, generations, mutation, answer, miss, generation = ()=>{}}) {
 
         var networks = []
         if(true){
@@ -58,8 +58,7 @@ class Trainer {
                 networks[i] = networks[i].layers
             }
         }   
-            const gpu = new GPU();
-            
+        const gpu = new GPU();
         const multiply = gpu.createKernel(function (a, b, length) {
             let sum = 0;
             for (let i = 0; i < length; i++) {
@@ -83,7 +82,7 @@ class Trainer {
                     output[j][z] = t.output;
                 }
             }
-
+            
             for (let j = 0; j < networks[0].length; j++) {
                 let layers = [];
                 for(let z = 0; z < networks.length; z++){
@@ -92,13 +91,12 @@ class Trainer {
                 multiply.setOutput([networks[0][j][0].length, checks, count])
                 input = multiply(input,   layers  , networks[0][j].length);
             }
-
+            
             let closest, smallestOffset;
             for (let j = 0; j < networks.length; j++) {
                 let offset = 0;
                 for (let z = 0; z < checks; z++) {
-                    offset += miss(output[j][z], input[j][z])
-                    offset += Math.abs(input[j][z] - output[j][z][0])
+                    offset += miss(input[j][z], output[j][z])
                 }
                 offset /= checks
                 if (!smallestOffset || offset < smallestOffset) {
@@ -107,10 +105,10 @@ class Trainer {
                 }
             }
 
-            console.log(`Gen: ${i}, offset: ${smallestOffset}`)
             networks[0] = networks[closest]
             let t = new Network(model.inputs, model.outputs);
             t.layers = networks[0]
+            generation(i,t,smallestOffset)
             for (let j = 1; j < networks.length; j++) {
                 networks[j] = t.mutate(...mutation).layers
             }

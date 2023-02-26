@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <canvas id="canvas" width="28" height="28" style="border:1px solid; height:280px"></canvas>
+    <button id="classify">Classify</button>
+    <h1>Answer: <span id="answer"></span></h1>
+
+    <button id="training">Training images</button>
+    <div id="container">
+
+    </div>
+    <h1>Outputs: <span id="outputs"></span></h1>
+
+
+    <script>
+
+        canvas = document.getElementById("canvas")
+        context = canvas.getContext("2d")
+
+        document.getElementById("training").addEventListener("click", ()=> {
+            let outputs = []
+            document.getElementById("container").innerHTML = ""
+            for(let i = 0; i < 6; i++){
+                fetch("http://localhost:3000/training").then((response) => response.json()).then((data) => {
+                    let pixels = data.input
+                    const arrayBuffer = new ArrayBuffer(28 * 28 * 4);
+                    let imageData = new Uint8ClampedArray(arrayBuffer);
+                    for(let y = 0; y < 28; y++){
+                        for(let x = 0; x < 28; x++){
+                            const i = (y*28+x)*4
+                            imageData[i] = 0;
+                            imageData[i+1] = 0;
+                            imageData[i+2] = 0;
+                            imageData[i+3] = pixels[y*28 + x];
+                        }
+                    }
+                    imageData = new ImageData(imageData, 28, 28)
+                    let frame = canvas.cloneNode(true);
+                    frame.getContext("2d").putImageData(imageData, 0, 0)
+                    document.getElementById("container").append(frame)
+                    fetch("http://localhost:3000/classify", {
+                        method: "POST",
+                        mode: "cors",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(pixels),
+                    }).then((response) => response.json()).then((data) => {
+                        outputs[i] = data.output
+                        document.getElementById("outputs").innerHTML = outputs
+                    })
+                    
+                })
+            }
+        })
+
+
+        document.getElementById("classify").addEventListener("click", () => {
+            let data = context.getImageData(0, 0, 28, 28).data
+            let output = [];
+            for(let i = 0; i< 28*28; i++){
+                output[i] = data[3+4*i]
+            }
+            fetch("http://localhost:3000/classify", {
+                method: "POST",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(output),
+            }).then((response) => response.json()).then((data) => {
+                document.getElementById("answer").innerText = data.output
+            })
+
+            context.clearRect(0, 0, 28, 28)
+
+
+        })
+
+        let x = 0;
+        let y = 0;
+        let isDrawing = false;
+        canvas.addEventListener("mousedown", (e) => {
+            x = e.offsetX;
+            y = e.offsetY;
+            isDrawing = true;
+            console.log(`(${x};${y})`)
+        })
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+            context.beginPath();
+            context.strokeStyle = "black"
+            context.lineWidth = 2;
+            context.lineJoin = "round";
+            context.moveTo(x/10, y/10);
+            context.lineTo(e.offsetX/10, e.offsetY/10);
+            context.closePath();
+            context.stroke();
+            x = e.offsetX;
+            y = e.offsetY;
+        }
+        canvas.addEventListener('mouseup', (e) => {
+            if (isDrawing) {
+                context.beginPath();
+                context.moveTo(x/10, y/10);
+                context.lineTo(e.offsetX/10, e.offsetY/10);
+                context.closePath();
+                context.stroke();
+                x = 0;
+                y = 0;
+                isDrawing = false;
+            }
+        });
+    });
+    </script>
+</body>
+</html>
