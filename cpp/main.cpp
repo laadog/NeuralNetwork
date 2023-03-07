@@ -56,10 +56,11 @@ class Network{
             srand(time(NULL));
             for(int i = 0; i < cellCount; i++){
                 layers[i] = rand() % 10;
+                
             }
         }
 
-        double* calculate(int input[]){
+        double* calculate(double input[]){
             int maxDepth = 0;
 
             for(int i = 0; i < layerCount + 1; i++){
@@ -90,9 +91,16 @@ class Network{
                 inputLayer = outputLayer;
                 outputLayer = t;
             }
-            free(inputLayer);
             free(outputLayer);
             return inputLayer;
+        }
+
+        Network mutate(float percentage, float offset){
+            Network mutated = Network(inputs, outputs);
+
+            cout << sizeof(layers) << endl;
+
+            return mutated;
         }
 
 
@@ -104,17 +112,11 @@ int main(int argc, char const *argv[])
     
     Network n = Network(2, 1);
     int depths[3] = {2,3,1};
-    int input[2] = {1, 1};
+    double input[2] = {1, 1};
     n.generate(depths, 3);
 
-    printArray(n.calculate(input), 1);
+    printArray(n.calculate(input), 2);
 
-    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
-    for(int i = 0; i < 1000000; i++){
-        n.calculate(input);
-    }
-    chrono::steady_clock::time_point end = chrono::steady_clock::now();
-    cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << endl;
 
     return 0;
 }
