@@ -19,11 +19,10 @@ let trainer = new Trainer({
         return Math.abs(output[0] - input);
     },
     generation: (gen, currentNetwork, offset) => {
-        console.log(`Gen: ${gen}, offset: ${offset}`)
+        //console.log(`Gen: ${gen}, offset: ${offset}`)
     },
 });
 
-
 console.time("Node")
-let network = trainer.train(1000)
+let network = trainer.train(100000)
 console.timeEnd("Node")

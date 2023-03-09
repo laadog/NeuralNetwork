@@ -139,17 +139,18 @@ class Trainer{
     int count, checks;
     float mutationPercentage, mutationOffset;
     double* (*answer)();
-    void (*answer)(double*);
+    void (*answerC)(double*, double*);
     double (*miss)(double*, double*);
 
     public:
-    Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, double* (*answer_t)(), double (*miss_t)(double*, double*)){
+    Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, double* (*answer_t)(), void (*answerC_t)(double*, double*), double (*miss_t)(double*, double*)){
         model = model_t;
         count = count_t;
         checks = checks_t;
         mutationPercentage = mutationPercentage_t;
         mutationOffset = mutationOffset_t;
         answer = answer_t;
+        answerC = answerC_t;
         miss = miss_t;
     }
 
@@ -213,6 +214,9 @@ class Trainer{
 
         double* inputLayer = (double*)malloc(sizeof(double) * maxDepth);
         double* outputLayer = (double*)malloc(sizeof(double) * maxDepth);
+        double* expected = (double*)malloc(sizeof(double) * (model.depths[model.layerCount]));
+        int layerOffset;
+        double* t;
 
         for(int i = 0; i < generations; i++){
 
@@ -220,11 +224,8 @@ class Trainer{
                 offset = 0;
                 for(int z = 0; z < checks; z++){
 
-                    double* input = answer();
-                    for(int y = 0; y<model.depths[0]; y++){
-                        inputLayer[y] = input[y];
-                    }
-                    int layerOffset = 0;
+                    answerC(inputLayer, expected);
+                    layerOffset = 0;
                     for(int y = 0; y < model.layerCount; y++){
                         if(y != 0){
                             layerOffset += model.depths[y-1] * model.depths[y];
@@ -235,12 +236,11 @@ class Trainer{
                                 outputLayer[c] += inputLayer[n] * networks[j].layers[layerOffset + n*model.depths[y+1] + c];
                             }
                         }
-                        double* t = inputLayer;
+                        t = inputLayer;
                         inputLayer = outputLayer;
                         outputLayer = t;
                     }
-                    offset += miss(input, inputLayer);
-                    free(input);
+                    offset += miss(inputLayer, expected);
                 
                 }
                 offset /= checks;
@@ -267,6 +267,9 @@ class Trainer{
             
         }
 
+        free(inputLayer);
+        free(outputLayer);
+        free(expected);
         return networks[closest];
 
     }
@@ -282,12 +285,15 @@ double* answer(){
     return prompt;
 }
 
-void answer(double*){
-
+void answerC(double* input, double* expected){
+    input[0] = double(rand() % 100) / 10;
+    input[1] = double(rand() % 100) / 10;
+    expected[2] = input[0] + input[1];
+    return;
 }
 
 double miss(double* input, double* output){
-    return abs(input[2] - output[0]);
+    return abs(input[0] - output[0]);
 }
 
 int main(int argc, char const *argv[])
@@ -299,13 +305,13 @@ int main(int argc, char const *argv[])
     int depths[2] = {2,1};
     n.generate(depths, 2);
 
-    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, &answer, &miss); 
+    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, &answer, &answerC, &miss); 
 
 
 
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
     
-    t.trainBeta(1000);   
+    t.trainBeta(100000);   
 
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
     cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << endl;
