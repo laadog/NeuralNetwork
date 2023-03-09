@@ -1,12 +1,29 @@
-let {Network} = require('./neuralnetwork')
+let {Network, Trainer} = require('./neuralnetwork')
+
+let b = new Network(2, 1)
+b.generate([])
 
 
-b = new Network(2, 1)
-b.generate([3])
+let trainer = new Trainer({
+    model: b,
+    generate: false,
+    count: 10,
+    checks: 10,
+    mutation: [0.5, 0.1],
+    answer: ()=>{
+        let x = Math.floor(Math.random() * 10);
+        let y = Math.floor(Math.random() * 10);
+        return ({input:[x, y], output: x+y})
+    },
+    miss: (output, input) => {
+        return Math.abs(output[0] - input);
+    },
+    generation: (gen, currentNetwork, offset) => {
+        console.log(`Gen: ${gen}, offset: ${offset}`)
+    },
+});
 
 
-console.time("JS")
-for(let i = 0; i< 1000000; i++){
-    b.calculate([1, 1])
-}
-console.timeEnd("JS")
+console.time("Node")
+let network = trainer.train(1000)
+console.timeEnd("Node")
