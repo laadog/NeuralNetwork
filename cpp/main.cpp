@@ -138,61 +138,23 @@ class Trainer{
 
     int count, checks;
     float mutationPercentage, mutationOffset;
-    double* (*answer)();
-    void (*answerC)(double*, double*);
+    void (*answer)(double*, double*);
     double (*miss)(double*, double*);
+    void (*generation)(int, Network, double);
 
     public:
-    Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, double* (*answer_t)(), void (*answerC_t)(double*, double*), double (*miss_t)(double*, double*)){
+    Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, void (*answer_t)(double*, double*), double (*miss_t)(double*, double*), void (*generation_t)(int, Network, double)){
         model = model_t;
         count = count_t;
         checks = checks_t;
         mutationPercentage = mutationPercentage_t;
         mutationOffset = mutationOffset_t;
         answer = answer_t;
-        answerC = answerC_t;
         miss = miss_t;
+        generation = generation_t;
     }
 
     Network train(int generations){
-        Network* networks = (Network*)malloc(sizeof(Network) * count);
-        networks[0] = model;
-        for(int i = 1; i < count; i++){
-            networks[i] = model.mutate(0.5, 0.1);
-        }
-
-        for(int i = 0; i < generations; i++){
-            int closest;
-            double smallestOffset;
-
-            for(int j = 0; j < count; j++){
-                double offset = 0;
-                for(int z = 0; z < checks; z++){
-                    double* input = answer();
-                    double* output = networks[j].calculate(input);
-                    offset += miss(input, output);
-                    free(input);
-                    free(output);
-                }
-                offset /= checks;
-                if(j == 0 || offset < smallestOffset){
-                    smallestOffset = offset;
-                    closest = j;
-                }
-            }
-
-            //cout << "Gen: " << i << " offset: " << smallestOffset << endl;
-            networks[0] = networks[closest];
-            for(int j = 1; j < count; j++){
-                networks[j] = networks[closest].mutate(mutationPercentage, mutationOffset);
-            }
-            
-        }
-
-        return networks[0];
-    }
-
-    Network trainBeta(int generations){
         Network* networks = (Network*)malloc(sizeof(Network) * count);
         networks[0] = model;
         int closest;
@@ -224,7 +186,7 @@ class Trainer{
                 offset = 0;
                 for(int z = 0; z < checks; z++){
 
-                    answerC(inputLayer, expected);
+                    answer(inputLayer, expected);
                     layerOffset = 0;
                     for(int y = 0; y < model.layerCount; y++){
                         if(y != 0){
@@ -250,7 +212,7 @@ class Trainer{
                 }
             }
 
-            //cout << "Gen: " << i << " offset: " << smallestOffset << endl;
+            generation(i, networks[closest], smallestOffset);
 
             for(int j = 0; j < count; j++){
                 if(j != closest){
@@ -276,16 +238,7 @@ class Trainer{
 
 };
 
-
-double* answer(){
-    double* prompt = (double*)malloc(sizeof(double)*3);
-    prompt[0] = double(rand() % 100) / 10;
-    prompt[1] = double(rand() % 100) / 10;
-    prompt[2] = prompt[0] + prompt[1];
-    return prompt;
-}
-
-void answerC(double* input, double* expected){
+void answer(double* input, double* expected){
     input[0] = double(rand() % 100) / 10;
     input[1] = double(rand() % 100) / 10;
     expected[2] = input[0] + input[1];
@@ -294,6 +247,10 @@ void answerC(double* input, double* expected){
 
 double miss(double* input, double* output){
     return abs(input[0] - output[0]);
+}
+
+void generation(int index, Network n, double offset){
+    //cout << "Gen: " << index << " offset: " << offset << endl;
 }
 
 int main(int argc, char const *argv[])
@@ -305,13 +262,13 @@ int main(int argc, char const *argv[])
     int depths[2] = {2,1};
     n.generate(depths, 2);
 
-    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, &answer, &answerC, &miss); 
+    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, answer, miss, generation); 
 
 
 
     chrono::steady_clock::time_point begin = chrono::steady_clock::now();
     
-    t.trainBeta(100000);   
+    t.train(100000);   
 
     chrono::steady_clock::time_point end = chrono::steady_clock::now();
     cout << "Time difference = " << chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms]" << endl;
