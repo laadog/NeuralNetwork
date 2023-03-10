@@ -19,7 +19,7 @@ let trainer = new Trainer({
         return Math.abs(output[0] - input);
     },
     generation: (gen, currentNetwork, offset) => {
-        //console.log(`Gen: ${gen}, offset: ${offset}`)
+        console.log(`Gen: ${gen}, offset: ${offset}`)
     },
 });
 
