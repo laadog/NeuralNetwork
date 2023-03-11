@@ -1,7 +1,7 @@
 #include "../headers/Trainer.h"
 
 
-Trainer::Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, void (*answer_t)(double*, double*), double (*miss_t)(double*, double*), void (*generation_t)(int, Network, double)){
+Trainer::Trainer(Network model_t, int count_t, int checks_t, float mutationPercentage_t, float mutationOffset_t, void (*answer_t)(double*, double*), double (*miss_t)(double*, double*), void (*generation_t)(int, Network, double), void (*activation_t)(double&)){
     model = model_t;
     count = count_t;
     checks = checks_t;
@@ -10,6 +10,7 @@ Trainer::Trainer(Network model_t, int count_t, int checks_t, float mutationPerce
     answer = answer_t;
     miss = miss_t;
     generation = generation_t;
+    activation = activation_t;
 }
 
 Network Trainer::train(int generations){
@@ -55,6 +56,7 @@ Network Trainer::train(int generations){
                         for(int n = 0; n < model.depths[y]; n++){
                             outputLayer[c] += inputLayer[n] * networks[j].layers[layerOffset + n*model.depths[y+1] + c];
                         }
+                        activation(outputLayer[c]);
                     }
                     t = inputLayer;
                     inputLayer = outputLayer;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <time.h>
+#include <math.h>
 
 #include "NeuralNetwork/NeuralNetwork.h"
 
@@ -20,6 +21,10 @@ void generation(int index, Network n, double offset){
     //cout << "Gen: " << index << " offset: " << offset << endl;
 }
 
+void activation(double& input){
+       //input = 1/(1+exp(-input));
+}
+
 int main(int argc, char const *argv[])
 {
 
@@ -29,7 +34,7 @@ int main(int argc, char const *argv[])
     int depths[2] = {2,1};
     n.generate(depths, 2);
 
-    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, answer, miss, generation); 
+    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, answer, miss, generation, activation); 
 
     Stopwatch s;
 

@@ -1,3 +1,9 @@
 cpp/.vscode/c_cpp_properties.json
 cpp/.vscode/settings.json
 cpp/a.out
+cpp/.vscode/launch.json
+.gitignore
+cpp/main
+.gitignore
+cpp/.vscode/tasks.json
+.gitignore
