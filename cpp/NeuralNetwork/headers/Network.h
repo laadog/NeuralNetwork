@@ -7,17 +7,20 @@
 class Network{
     int inputs, outputs;
 
+
     public:
+        void (*activation)(double&);
         float* layers;
         int layerCount;
         int* depths;
-        Network(int inputs_t, int outputs_t);
+        Network(int, int, void (*)(double&));
 
         Network();
 
         ~Network();
 
-        void generate(int*, int );
+        void generate(int*, int);
         double* calculate(double*);
         Network mutate(float, float);
+        int getComplexity();
 };

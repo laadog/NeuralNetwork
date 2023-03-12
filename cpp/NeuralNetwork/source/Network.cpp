@@ -1,9 +1,10 @@
 #include "../headers/Network.h"
 
 
-Network::Network(int inputs_t, int outputs_t){
+Network::Network(int inputs_t, int outputs_t, void(*activation_t)(double&)){
     inputs = inputs_t;
     outputs = outputs_t;
+    activation = activation_t;
 }
 
 Network::Network(){
@@ -25,7 +26,7 @@ void Network::generate(int depths_t[], int size){
     depths[size-1] = depths_t[size-1];
     layers = (float*)malloc(sizeof(float)*cellCount);
     for(int i = 0; i < cellCount; i++){
-        layers[i] = rand() % 10;
+        layers[i] = (1 - (rand() % 100) / 50)*1;
         
     }
 }
@@ -56,6 +57,7 @@ double* Network::calculate(double* input){
             for(int z = 0; z < depths[i]; z++){
                 outputLayer[j] += inputLayer[z] * layers[offset + z*depths[i+1] + j];
             }
+            activation(outputLayer[j]);
         }
         t = inputLayer;
         inputLayer = outputLayer;
@@ -67,7 +69,7 @@ double* Network::calculate(double* input){
 
 Network Network::mutate(float percentage, float offset){
     
-    Network mutated = Network(inputs, outputs);
+    Network mutated = Network(inputs, outputs, activation);
     mutated.layerCount = layerCount;
     mutated.depths = (int*)malloc(sizeof(int)*(layerCount+1));
     int cellCount = 0;
@@ -91,3 +93,10 @@ Network Network::mutate(float percentage, float offset){
     return mutated;
 }
 
+int Network::getComplexity(){
+    int count = 0;
+    for(int i = 0; i < layerCount; i++){
+        count += depths[i] * depths[i+1];
+    }
+    return count;
+}

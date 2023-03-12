@@ -10,11 +10,12 @@ class Trainer{
     void (*answer)(double*, double*);
     double (*miss)(double*, double*);
     void (*generation)(int, Network, double);
-    void (*activation)(double&);
 
     public:
-    Trainer(Network,int ,int ,float, float, void (*)(double*, double*), double (*)(double*, double*), void (*)(int, Network, double), void (*activation)(double&));
+    Trainer(Network,int ,int ,float, float, void (*)(double*, double*), double (*)(double*, double*), void (*)(int, Network, double));
 
     Network train(int);
+
+    int getComplexity();
 
 };

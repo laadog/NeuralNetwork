@@ -1,24 +1,44 @@
 #include <iostream>
 #include <time.h>
 #include <math.h>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #include "NeuralNetwork/NeuralNetwork.h"
 
 using namespace std;
 
+int* data;
+
 void answer(double* input, double* expected){
-    input[0] = double(rand() % 100) / 10;
-    input[1] = double(rand() % 100) / 10;
-    expected[0] = input[0] + input[1];
+    int offset = (random() % 1000) * 785;
+    for(int i = 0; i < 784; i++){
+        input[i] = data[offset + i];
+    }
+    expected[0] = data[offset + 784];
     return;
 }
 
 double miss(double* output, double* expected){
-    return abs(output[0] - expected[0]);
+    double highest = 0;
+    int index;
+    for(int i = 0; i < 10; i++){
+        if(output[i] > highest){
+            highest = output[i];
+            index = i;
+        }
+    }
+
+    if(index == expected[0]){
+        return 0;
+    }else{
+        return 1;
+    }
 }
 
 void generation(int index, Network n, double offset){
-    //cout << "Gen: " << index << " offset: " << offset << endl;
+    cout << "Gen: " << index << " offset: " << offset << endl;
 }
 
 void activation(double& input){
@@ -28,19 +48,32 @@ void activation(double& input){
 int main(int argc, char const *argv[])
 {
 
+    data = (int*)(malloc(sizeof(int)* 785 * 999));
+    fstream fin;
+    fin.open("data/mnistTrain.csv", ios::in);
+    string temp, word;
+    fin >> temp;
+    int index = 0;
+    while(fin >> temp){
+        stringstream s(temp);
+        while (getline(s, word, ',')) {
+            data[index++] = stoi(word);
+        }
+    }
+
     srand(time(NULL));
-    Network n = Network(2, 1);
+    Network n = Network(784, 10, activation);
 
-    int depths[2] = {2,1};
-    n.generate(depths, 2);
+    int depths[3] = {784,64,10};
+    n.generate(depths, 3);
 
-    Trainer t = Trainer(n, 10, 10, 0.5, 0.1, answer, miss, generation, activation); 
+    Trainer t = Trainer(n, 100, 1000, 0.25, 1, answer, miss, generation); 
 
     Stopwatch s;
 
     s.start();
     
-    t.train(100000);   
+    t.train(10);   
 
     s.stop();
 
