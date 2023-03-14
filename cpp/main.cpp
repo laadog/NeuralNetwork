@@ -7,7 +7,12 @@
 
 #include "NeuralNetwork/NeuralNetwork.h"
 
-using namespace std;
+//using namespace std;
+using std::cout;
+using std::fstream;
+using std::stringstream;
+
+
 
 int* data;
 
@@ -15,6 +20,7 @@ void answer(double* input, double* expected){
     int offset = (random() % 1000) * 785;
     for(int i = 0; i < 784; i++){
         input[i] = data[offset + i];
+        // input[i] = data[offset + i];
     }
     expected[0] = data[offset + 784];
     return;
@@ -38,7 +44,7 @@ double miss(double* output, double* expected){
 }
 
 void generation(int index, Network n, double offset){
-    cout << "Gen: " << index << " offset: " << offset << endl;
+    cout << "Gen: " << index << " offset: " << offset << std::endl;
 }
 
 void activation(double& input){
@@ -50,8 +56,8 @@ int main(int argc, char const *argv[])
 
     data = (int*)(malloc(sizeof(int)* 785 * 999));
     fstream fin;
-    fin.open("data/mnistTrain.csv", ios::in);
-    string temp, word;
+    fin.open("data/mnistTrain.csv", std::ios::in);
+    std::string temp, word;
     fin >> temp;
     int index = 0;
     while(fin >> temp){
@@ -73,7 +79,7 @@ int main(int argc, char const *argv[])
 
     s.start();
     
-    t.train(10);   
+    t.train(10, 8);   
 
     s.stop();
 
