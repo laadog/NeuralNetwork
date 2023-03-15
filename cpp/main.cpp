@@ -20,7 +20,6 @@ void answer(double* input, double* expected){
     int offset = (random() % 1000) * 785;
     for(int i = 0; i < 784; i++){
         input[i] = data[offset + i];
-        // input[i] = data[offset + i];
     }
     expected[0] = data[offset + 784];
     return;
@@ -48,7 +47,7 @@ void generation(int index, Network n, double offset){
 }
 
 void activation(double& input){
-       //input = 1/(1+exp(-input));
+       input = 1/(1+exp(-input));
 }
 
 int main(int argc, char const *argv[])

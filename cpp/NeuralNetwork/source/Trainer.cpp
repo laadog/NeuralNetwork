@@ -162,12 +162,12 @@ Network Trainer::train(int generations, int threads){
     std::thread workers[threads];
     int closest = -1;
     double smallestOffset;
-    double offset = 0;
     int cellCount = 0;
     int maxDepth = 0;
+    int countPerThread = count / threads;
 
     for(int i = 1; i < count; i++){
-        networks[i] = model.mutate(0.5, 0.1);
+        networks[i] = model.mutate(mutationPercentage, mutationOffset);
     }
 
     for(int i = 0; i < model.layerCount; i++){
@@ -178,9 +178,9 @@ Network Trainer::train(int generations, int threads){
     if(model.depths[model.layerCount] > maxDepth){maxDepth = model.depths[model.layerCount];}
 
     for(int i = 0; i < generations; i++){
-        int countPerThread = count / threads;
-        int c = 0;
 
+        int c = 0;
+        closest = -1;
         for(int j = 0; j < threads; j++){
             if(j < count % threads){
                 workers[j] = std::thread(threadFunc, std::ref(networks), j * countPerThread + c, countPerThread + 1, checks, std::ref(smallestOffset), std::ref(closest), answer, miss);
