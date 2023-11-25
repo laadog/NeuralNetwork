@@ -1,7 +1,7 @@
 let {Network, Bot, Trainer, functions} = require('./neuralnetwork')
 const fs = require("fs")
 const csvParser = require("csv-parser");
-
+//Comment
 let training = [];
 
 fs.createReadStream('./data/mnistTrain.csv', {encoding: "utf-8"}).pipe(csvParser()).on("data", (data) => {
